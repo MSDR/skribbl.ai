@@ -1,5 +1,15 @@
-# starting point: https://thepythoncode.com/code/make-a-drawing-program-with-python
-# this script has been heavily modified from that template.
+"""
+Started from this template: https://thepythoncode.com/code/make-a-drawing-program-with-python
+The script has been heavily modified from that template.
+
+Instructions for use:
+    LCLICK -> draw
+    U      -> undo
+    LSHIFT -> save and start new drawing
+    TAB    -> delete previous drawing (in case of accidental save)
+    ESC    -> quit
+
+"""
 
 ########## Setup #######################################################
 
