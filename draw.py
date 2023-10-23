@@ -127,8 +127,8 @@ while True:
         mx, my = pygame.mouse.get_pos()
 
         # calculate position on the canvas
-        dx = mx - x/2 + canvasSize[0]/2
-        dy = my - y/2 + canvasSize[1]/2
+        dx = mx - x/2 + canvasSize[0]/2 - int(brushSize/2)
+        dy = my - y/2 + canvasSize[1]/2 - int(brushSize/2)
 
         pygame.draw.circle(
             canvas,
