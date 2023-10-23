@@ -9,6 +9,8 @@ Instructions for use:
     TAB    -> delete previous drawing (in case of accidental save)
     ESC    -> quit
 
+Drawings are 512x512 and saved to /data/drawings/[label]/
+
 """
 
 ########## Setup #######################################################
@@ -65,7 +67,7 @@ canvas = canvas.copy()
 mouse_pressed = False
 
 # keep path of last image
-last_image_path = None
+last_image_path = "first"
 
 
 ########## Game Loop #######################################################
@@ -100,7 +102,7 @@ while True:
 
         # delete previous drawing
         elif ((event.type == pygame.KEYDOWN and event.key == pygame.K_TAB and len(prev_canvases) > 1) and
-              last_image_path is not None):
+              last_image_path is not None and last_image_path != "first"):
             os.remove(last_image_path)
             last_image_path = None
         
@@ -115,7 +117,7 @@ while True:
 
     # feedback for image deletion
     if last_image_path is None:
-        word_surface = font.render("last image deleted", False, (255, 35, 35))
+        word_surface = font.render("prev. image deleted", False, (255, 35, 35))
         screen.blit(word_surface, (4, 2))
 
 
