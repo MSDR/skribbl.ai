@@ -4,6 +4,7 @@ The script has been heavily modified from that template.
 
 Instructions for use:
     LCLICK -> draw
+    SPACE  -> cycle brush color
     U      -> undo
     LSHIFT -> save and start new drawing
     TAB    -> delete previous drawing (in case of accidental save)
@@ -40,7 +41,8 @@ canvas = pygame.Surface(canvasSize)
 canvas.fill((255, 255, 255))
 
 # brush parameters
-drawColor = [0, 0, 0]
+colors = [[0,0,0], [255,10,30], [30,255,90], [30,50,255], [120,60,30], [240, 240, 0]]
+drawColor = 0
 brushSize = 8
 brushSizeSteps = 12
 
@@ -50,14 +52,23 @@ words = []
 with open("data/wordlist.txt", 'r') as file:
     for word in file:
         words.append(word.strip())
-current_word = random.choice(words)
+
+# record num remaining sketches to draw per class
+# max: 4
+remaining_words = []
 
 # make save folders if needed
 for word in words:
     folder_path = "data/drawings/"+word
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
+        remaining_words.extend([word for i in range(0, 4)])
+    else:
+        num_sketches = len([f for f in os.listdir("data/drawings/"+word)])
+        remaining_words.extend([word for i in range(0, 4-num_sketches)])
 
+current_word = random.choice(remaining_words)
+print("sketches remaining: " + str(len(remaining_words)))
 
 # keep canvases for undo
 prev_canvases = [canvas]
@@ -68,13 +79,14 @@ mouse_pressed = False
 
 # keep path of last image
 last_image_path = "first"
+last_word = None
 
 
 ########## Game Loop #######################################################
 
 while True:
     # background
-    screen.fill((30, 30, 30))
+    screen.fill((100, 100, 100))
 
     # process keyboard
     for event in pygame.event.get():
@@ -85,15 +97,19 @@ while True:
             sys.exit()
 
         # save & start new drawing
-        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_LSHIFT):
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_LSHIFT and len(prev_canvases) > 1):
            # save drawing
            index = len([f for f in os.listdir("data/drawings/"+current_word)])
            last_image_path = "data/drawings/"+current_word+"/"+str(index)+".png"
            pygame.image.save(canvas, last_image_path)
 
            # prepare for next drawing
-           current_word = random.choice(words)
+           last_word = current_word
+           current_word = random.choice(remaining_words)
            canvas.fill((255, 255, 255))
+
+           prev_canvases = [canvas]
+           canvas = canvas.copy()
 
         # undo
         elif (event.type == pygame.KEYDOWN and event.key == pygame.K_u and len(prev_canvases) > 1):
@@ -105,6 +121,13 @@ while True:
               last_image_path is not None and last_image_path != "first"):
             os.remove(last_image_path)
             last_image_path = None
+            remaining_words.append(last_word)
+
+        # change color
+        elif ((event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE)):
+            drawColor += 1
+            if drawColor >= len(colors):
+                drawColor = 0
         
 
     # draw canvas at the bottom-center of the screen
@@ -112,13 +135,13 @@ while True:
     screen.blit(canvas, [x/2 - canvasSize[0]/2, y - canvasSize[1]])
 
     # draw current word at top of screen
-    word_surface = font.render(current_word, False, (255, 255, 255))
+    word_surface = font.render(current_word, False, colors[drawColor])
     screen.blit(word_surface, (x/2-word_surface.get_bounding_rect().w/2, 2))
 
     # feedback for image deletion
     if last_image_path is None:
         word_surface = font.render("prev. image deleted", False, (255, 35, 35))
-        screen.blit(word_surface, (4, 2))
+        screen.blit(word_surface, (4, 2)) 
 
 
     # draw when mouse is pressed
@@ -132,7 +155,7 @@ while True:
 
         pygame.draw.circle(
             canvas,
-            drawColor,
+            colors[drawColor],
             [dx, dy],
             brushSize,
         )
