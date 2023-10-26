@@ -27,7 +27,7 @@ keyboard
 island
 eyebrow
 sunflower
-ocopus
+octopus
 church
 tongue
 snowflake
