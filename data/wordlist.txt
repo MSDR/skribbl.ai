@@ -92,7 +92,6 @@ strawberry
 emoji
 hill
 avocado
-factor
 pig
 butterfly
 shovel
@@ -150,3 +149,4 @@ mug
 gnome
 hashtag
 alien
+factory
