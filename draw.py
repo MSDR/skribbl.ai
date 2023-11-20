@@ -106,7 +106,9 @@ while True:
            # prepare for next drawing
            last_word = current_word
            current_word = random.choice(remaining_words)
+           remaining_words.remove(last_word)
            canvas.fill((255, 255, 255))
+           print("sketches remaining: " + str(len(remaining_words)))
 
            prev_canvases = [canvas]
            canvas = canvas.copy()
