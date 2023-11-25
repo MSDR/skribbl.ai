@@ -65,7 +65,8 @@ for word in words:
         remaining_words.extend([word for i in range(0, 4)])
     else:
         num_sketches = len([f for f in os.listdir("data/drawings/"+word)])
-        remaining_words.extend([word for i in range(0, 4-num_sketches)])
+        if num_sketches == 0:
+            remaining_words.extend([word for i in range(0, 1)])#4-num_sketches)])
 
 current_word = random.choice(remaining_words)
 print("sketches remaining: " + str(len(remaining_words)))

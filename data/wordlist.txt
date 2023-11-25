@@ -150,3 +150,51 @@ gnome
 hashtag
 alien
 factory
+battery
+llama
+pepper
+graph
+shirt
+shoe
+smartphone
+iphone
+fork
+percent
+sun
+sunrise
+toilet
+cliff
+jelly beans
+sunglasses
+baseball cap
+baseball
+lake
+angry
+dolphin
+bug
+trash can
+map
+beard
+pinecone
+cheese
+kayak
+river
+camel
+hammer
+unicycle
+grapes
+cherry
+tomato
+lizard
+car
+motorcycle
+skyscraper
+kitten
+puppy
+trumpet
+pants
+flip flop
+envelope
+ghost
+eyeball
+heart
