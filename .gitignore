@@ -1,4 +1,4 @@
-
+finetune_stable_diffusion.ipynb
 data/drawings_old/window/5.png
 data/drawings_old/window/4.png
 data/drawings_old/window/3.png
@@ -100,3 +100,4 @@ data/drawings_old/apple/1.png
 data/drawings_old/apple/0.png
 data/drawings_old/ant/1.png
 data/drawings_old/ant/0.png
+*.ckpt

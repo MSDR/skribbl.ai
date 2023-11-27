@@ -1,7 +1,4 @@
 """
-Started from this template: https://thepythoncode.com/code/make-a-drawing-program-with-python
-The script has been heavily modified from that template.
-
 Instructions for use:
     LCLICK -> draw
     SPACE  -> cycle brush color
@@ -66,7 +63,7 @@ for word in words:
     else:
         num_sketches = len([f for f in os.listdir("data/drawings/"+word)])
         if num_sketches == 0:
-            remaining_words.extend([word for i in range(0, 1)])#4-num_sketches)])
+            remaining_words.extend([word for i in range(0, 4-num_sketches)])
 
 current_word = random.choice(remaining_words)
 print("sketches remaining: " + str(len(remaining_words)))
