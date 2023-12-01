@@ -7,7 +7,7 @@ Instructions for use:
     TAB    -> delete previous drawing (in case of accidental save)
     ESC    -> quit
 
-Drawings are 512x512 and saved to /data/drawings/[label]/
+Drawings are 512x512 and saved to skribbl.ai/data/drawings/[label]/
 
 """
 
@@ -20,6 +20,8 @@ import ctypes
 import random
 import os
 
+DATA_PATH = os.path.abspath("..")+"\\skribbl.ai\\data"
+print("path:", DATA_PATH)
 
 # increase dots per inch so it looks sharper
 ctypes.windll.shcore.SetProcessDpiAwareness(True)
@@ -46,7 +48,7 @@ brushSizeSteps = 12
 
 # load word choices
 words = []
-with open("data/wordlist.txt", 'r') as file:
+with open(DATA_PATH+"\\wordlist.txt", 'r') as file:
     for word in file:
         words.append(word.strip())
 
@@ -56,14 +58,13 @@ remaining_words = []
 
 # make save folders if needed
 for word in words:
-    folder_path = "data/drawings/"+word
+    folder_path = DATA_PATH+"\\drawings/"+word
     if not os.path.isdir(folder_path):
         os.makedirs(folder_path)
         remaining_words.extend([word for i in range(0, 4)])
     else:
-        num_sketches = len([f for f in os.listdir("data/drawings/"+word)])
-        if num_sketches == 0:
-            remaining_words.extend([word for i in range(0, 4-num_sketches)])
+        num_sketches = len([f for f in os.listdir(DATA_PATH+"\\drawings\\"+word)])
+        remaining_words.extend([word for i in range(0, 4-num_sketches)])
 
 current_word = random.choice(remaining_words)
 print("sketches remaining: " + str(len(remaining_words)))
@@ -97,8 +98,8 @@ while True:
         # save & start new drawing
         elif (event.type == pygame.KEYDOWN and event.key == pygame.K_LSHIFT and len(prev_canvases) > 1):
            # save drawing
-           index = len([f for f in os.listdir("data/drawings/"+current_word)])
-           last_image_path = "data/drawings/"+current_word+"/"+str(index)+".png"
+           index = len([f for f in os.listdir(DATA_PATH+"\\drawings\\"+current_word)])
+           last_image_path = DATA_PATH+"\\drawings\\"+current_word+"\\"+str(index)+".png"
            pygame.image.save(canvas, last_image_path)
 
            # prepare for next drawing
