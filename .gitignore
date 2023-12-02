@@ -101,3 +101,4 @@ data/drawings_old/apple/0.png
 data/drawings_old/ant/1.png
 data/drawings_old/ant/0.png
 *.ckpt
+__pycache__/
