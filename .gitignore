@@ -102,3 +102,4 @@ data/drawings_old/ant/1.png
 data/drawings_old/ant/0.png
 *.ckpt
 __pycache__/
+server/checkpoint/
