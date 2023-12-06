@@ -29,7 +29,7 @@ canvasSize = 512 # canvas.canvasSize[0] is too verbose
 canvas_coords = [canvasSize/2, screen_height/2 - canvasSize/2] # [256, 104]
 
 # fonts
-hint_font = pygame.font.SysFont('Comic Sans', 40)
+prompt_font = pygame.font.SysFont('Comic Sans', 40)
 chat_font = pygame.font.SysFont('Comic Sans', 24)
 
 # chat box
@@ -49,8 +49,8 @@ currently_drawing = False
 game_phase = "ai"
 
 # word stuff
-current_word = "chef"
-hint = ""
+current_word = "full moon"
+hint = None
 hint_indices = []
 
 round_start_time = int(time.time())
@@ -106,17 +106,19 @@ def process_mouse_press():
 # this function isn't pretty but it works
 def update_hint():
     global hint
+    global hint_indices
 
     # update hint if necessary
     round_time = int(time.time())-round_start_time
     hint_count = max(int(round_time/15)-1, 0)
-    if len(hint_indices) > hint_count:
-        hint_indices.append(random.choice([i for i in range(len(current_word)) if i not in hint_indices]))
+    if len(hint_indices) < hint_count:
+        hint_indices.append(random.choice([i for i, c in enumerate(current_word) if i not in hint_indices and c != ' ']))
 
         # construct hint
-        hint = "".join([c if i in hint_indices else ('-' if c != ' ' else ' ') for i, c in enumerate(current_word)])
-    elif hint == "":
-        hint = "".join(["-" for i in range(len(current_word))])
+        hint = "".join([c if i in hint_indices else ("-" if c != ' ' else ' ') for i, c in enumerate(current_word)])
+
+    elif hint == None:
+        hint = "".join([("-" if c != ' ' else ' ') for c in current_word])
 
 # draw canvas at the bottom-center of the screen
 def draw_canvas():
@@ -130,12 +132,15 @@ def draw_canvas():
     )
 
 # draw current word at top of screen
-def draw_hint():
+def draw_prompt():
+    # compute prompt
     update_hint()
+    prompt = hint if game_phase != "human" else current_word
 
-    hint_surface = hint_font.render('"'+(hint if game_phase != "human" else current_word)+'"', True, [0,0,0])
-    hint_rect = hint_surface.get_bounding_rect()
-    screen.blit(hint_surface, (canvas_coords[0]+canvasSize/2-hint_rect.w/2, canvas_coords[1]-hint_rect.h*2))
+    # draw prompt
+    prompt_surface = prompt_font.render('"'+prompt+'"', True, [0,0,0])
+    prompt_rect = prompt_surface.get_bounding_rect()
+    screen.blit(prompt_surface, (canvas_coords[0]+canvasSize/2-prompt_rect.w/2, canvas_coords[1]-60))
 
 # draw chat box to the right of canvas
 def draw_chatbox():
@@ -171,7 +176,7 @@ while True:
     process_mouse_press()
 
     ### draw elements to screen #######################
-    draw_hint()    # draw current word at top of screen
+    draw_prompt()    # draw current word at top of screen
     draw_canvas()  # draw canvas at the bottom-center of the screen
     draw_chatbox() # draw chat box to the right of canvas
     draw_timer()
