@@ -20,4 +20,4 @@ class ChatBox:
         self.surface.fill((255, 255, 255))
         for i, msg in enumerate(self.chat_history):
             msg_surface = self.chat_font.render(msg, True, [0,0,0])
-            self.surface.blit(msg_surface, (4, 400-i*40))
+            self.surface.blit(msg_surface, (3, 400-i*40))

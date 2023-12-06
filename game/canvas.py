@@ -49,5 +49,5 @@ class Canvas():
             self.brushSize,
         )
 
-    def draw_image(self):
-        pass
+    def draw_image(self, image):
+        self.canvas.blit(image, [0,0])

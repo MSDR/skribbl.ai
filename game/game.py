@@ -9,6 +9,8 @@ import ctypes
 import random
 import os
 
+import time
+
 ########## Pygame Setup #######################################################
 
 # increase dots per inch so it looks sharper
@@ -37,57 +39,26 @@ chat_box = ChatBox(chat_font)
 def output_textbox():
     chat_box.chat("Human", textbox.getText())
     textbox.setText("")
-textbox = TextBox(screen, 800, 578, 350, 40, font=chat_font,
+textbox = TextBox(screen, 800, 578, 358, 40, font=chat_font,
                   borderColour=(0, 0, 0),
                   onSubmit=output_textbox, radius=2, borderThickness=4) 
 
 # to track when mouse is released
-mouse_pressed = False
+currently_drawing = False
+
+game_phase = "ai"
 
 # word stuff
 current_word = "chef"
+hint = ""
+hint_indices = []
+
+round_start_time = int(time.time())
 
 
-########## Display Functions ##################################################
+########## Game Functions ##################################################
 
-# draw canvas at the bottom-center of the screen
-def draw_canvas():
-    screen.blit(canvas.canvas, canvas_coords)
-    pygame.draw.rect(
-        screen,
-        [0,0,0],
-        [canvas_coords[0]-2, canvas_coords[1]-2, canvasSize+4, canvasSize+4],
-        4,
-        2
-    )
-
-# draw current word at top of screen
-def draw_hint():
-    hint_surface = hint_font.render(current_word, True, [0,0,0])
-    hint_rect = hint_surface.get_bounding_rect()
-    screen.blit(hint_surface, (canvas_coords[0]+canvasSize/2-hint_rect.w/2, canvas_coords[1]-hint_rect.h*2))
-
-# draw chat box to the right of canvas
-def draw_chatbox():
-    screen.blit(chat_box.surface, (804, 106))
-    pygame.draw.rect(
-        screen,
-        [0,0,0],
-        [800, 102, 358, 448],
-        4,
-        2
-    )
-
-
-########## Game Loop ##########################################################
-
-while True:
-    # background color
-    screen.fill((100, 100, 100))
-
-    ### process keyboard events #######################
-
-    events = pygame.event.get()
+def process_keyboard_events(events):
     for event in events:
         # quit
         if (event.type == pygame.QUIT or 
@@ -107,37 +78,103 @@ while True:
         elif ((event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE)):
             canvas.cycle_color()
 
-    ### process mouse events ##########################
+        elif ((event.type == pygame.KEYDOWN and event.key == pygame.K_i)):
+            canvas.draw_image(prompt_to_sketch("chef"))
+            global round_start_time
+            round_start_time = int(time.time())
 
+def process_mouse_press():
+    global currently_drawing
     if pygame.mouse.get_pressed()[0]:
-        # calculate position on the canvas
         mx, my = pygame.mouse.get_pos()
 
         # draw if mouse pressed within canvas
         if (mx > canvas_coords[0] and mx < canvas_coords[0]+canvasSize and
             my > canvas_coords[1] and my < canvas_coords[1]+canvasSize):
 
+            # calculate position on the canvas
             dx = mx - canvas_coords[0]
             dy = my - canvas_coords[1]
 
             canvas.draw_stroke(dx, dy)
-            mouse_pressed = True
+            currently_drawing = True
 
-    # mouse just released, record canvas for undo
-    elif mouse_pressed:
+    elif currently_drawing: # mouse just released from canvas
         canvas.do()
-        mouse_pressed = False
+        currently_drawing = False
+
+# this function isn't pretty but it works
+def update_hint():
+    global hint
+
+    # update hint if necessary
+    round_time = int(time.time())-round_start_time
+    hint_count = max(int(round_time/15)-1, 0)
+    if len(hint_indices) > hint_count:
+        hint_indices.append(random.choice([i for i in range(len(current_word)) if i not in hint_indices]))
+
+        # construct hint
+        hint = "".join([c if i in hint_indices else ('-' if c != ' ' else ' ') for i, c in enumerate(current_word)])
+    elif hint == "":
+        hint = "".join(["-" for i in range(len(current_word))])
+
+# draw canvas at the bottom-center of the screen
+def draw_canvas():
+    screen.blit(canvas.canvas, canvas_coords)
+    pygame.draw.rect(
+        screen,
+        [0,0,0],
+        [canvas_coords[0]-2, canvas_coords[1]-2, canvasSize+4, canvasSize+4],
+        4,
+        2
+    )
+
+# draw current word at top of screen
+def draw_hint():
+    update_hint()
+
+    hint_surface = hint_font.render('"'+(hint if game_phase != "human" else current_word)+'"', True, [0,0,0])
+    hint_rect = hint_surface.get_bounding_rect()
+    screen.blit(hint_surface, (canvas_coords[0]+canvasSize/2-hint_rect.w/2, canvas_coords[1]-hint_rect.h*2))
+
+# draw chat box to the right of canvas
+def draw_chatbox():
+    screen.blit(chat_box.surface, (804, 106))
+    pygame.draw.rect(
+        screen,
+        [0,0,0],
+        [800, 102, 358, 448],
+        4,
+        2
+    )
+
+def draw_timer():
+    # calculate timer interval
+    round_time = int(time.time())-round_start_time
+    timer_time = round_time - round_time%15 + (7 if round_time%15 >= 7 else 0)
+
+    timer_image = pygame.image.load("game/assets/timer"+str(timer_time)+".png")
+    screen.blit(timer_image, [1160, 0])
+
+
+########## Game Loop ##########################################################
+
+while True:
+    # background color
+    screen.fill((140, 200, 200))
+
+    ### process keyboard events #######################
+    events = pygame.event.get()
+    process_keyboard_events(events)
+
+    ### process mouse events ##########################
+    process_mouse_press()
 
     ### draw elements to screen #######################
-
-    # draw canvas at the bottom-center of the screen
-    draw_canvas()
-
-    # draw current word at top of screen
-    draw_hint()
-
-    # draw chat box to the right of canvas
-    draw_chatbox()
+    draw_hint()    # draw current word at top of screen
+    draw_canvas()  # draw canvas at the bottom-center of the screen
+    draw_chatbox() # draw chat box to the right of canvas
+    draw_timer()
 
     ### advance display ###############################
     pygame_widgets.update(events)
