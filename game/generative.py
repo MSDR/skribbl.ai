@@ -19,7 +19,7 @@ class Generative():
             for word in file:
                 self.prompts.append(word.strip())
 
-        self.impressive_prompts = ["pirate", "pizza", "parrot", "smile", "wave", "skyscraper", "dog"]
+        self.impressive_prompts = ["pirate", "pizza", "parrot", "smile", "wave", "house", "dog", "tree", "chef", "mushroom", "fish", "triangle", "circle", "square"]
         
     # returns a list of three prompt choices
     def sample_prompts(self):
@@ -28,7 +28,7 @@ class Generative():
     def generate_prompt(self):
         url = f'{self.server_url}/choose_prompt'
         prompts = self.sample_prompts()
-        return prompts[0]
+        # return prompts[0]
         res = requests.get(url, params={'prompts': prompts})
 
         if res.status_code == 200:

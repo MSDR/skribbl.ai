@@ -1,18 +1,16 @@
 from canvas import Canvas
 from chat import ChatBox
+import ctypes
+import cv2
 from generative import Generative
 from ImgUtils.sketch import split_sketch_into_components, display_images
-import sys
+import numpy as np
+from PIL import Image
 import pygame
 import pygame_widgets
 from pygame_widgets.textbox import TextBox
-import ctypes
 import random
-import os
-import cv2
-import numpy as np
-from PIL import Image
-
+import sys
 import time
 
 ########## Generative Setup ###################################################
@@ -103,6 +101,11 @@ def advance_game_phase():
     else:
         if game_phase == "ai":
             sketch = generative.prompt_to_sketch(current_word)
+            sketch_array = np.array(sketch)
+            if(np.where(sketch_array != 0)[0].shape[0] == 0):
+                print("nsfw filter activated. trying again...")
+                return False
+            #print(all(np.where(sketch_array == 255) == sketch_array.shape))
             sketch_pieces = []
             imgs = split_sketch_into_components(sketch)
             for img in imgs:
@@ -124,6 +127,7 @@ def advance_game_phase():
         round_start_time = int(time.time())
         round_time = 0
         last_guess_time = 0
+    return True
 
 def choose_start_message(nsfw=None):
     global start_message
@@ -163,7 +167,7 @@ def process_keyboard_events(events):
             sys.exit()
 
         # start new drawing
-        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN):
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_DELETE):
            canvas.reset()
 
         # undo
@@ -330,8 +334,9 @@ while True:
         draw_start_screen()
 
         if round_time > 0:
-            print("moving to ai")
-            advance_game_phase()
+            while not advance_game_phase():
+                game_phase = "ai_start"
+                continue
 
     ### game phase ########################################
     else:
