@@ -13,7 +13,7 @@ class Generative():
         self.stg = None#SketchToGuess()
 
     def generate_prompt(self):
-        return random.choice(["chef", "flower", "apple", "cat", "tree"])
+        return random.choice(["chef", "apple", "tree", "worm", "pizza", "dog", "shark", "bridge", "slug", "parrot", "broccoli"])
 
     def prompt_to_sketch(self, prompt):
         #return pygame.image.load("game/chef.png")

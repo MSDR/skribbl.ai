@@ -56,7 +56,7 @@ textbox = TextBox(screen, 800, 578, 358, 40, font=chat_font,
 # to track when mouse is released
 currently_drawing = False
 
-game_phase = "human"
+game_phase = "ai_start"
 last_stroke_time = 0
 sketch_pieces = []
 
@@ -98,17 +98,16 @@ def advance_game_phase():
     else:
         if game_phase == "ai":
             sketch = generative.prompt_to_sketch(current_word)
+            sketch_pieces = []
             sketch.save("game/0sketch.png")
             imgs = split_sketch_into_components(sketch)
             for img in imgs:
-                img_bgra = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGRA)
-                sketch_pieces.append(Image.fromarray(img_bgra[:, :, [2, 1, 0, 3]]))
-
-            # images = []
-            # for img in imgs:
-            #     images.append(cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGRA))
-            # display_images(images)
-            #sketch_pieces[0].show()
+                img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGRA)
+                rgb = img[:, :, :3] * 255
+                alpha = img[:, :, 3:]
+                img_modified = np.concatenate((rgb, alpha), axis=-1)
+                img_modified = img_modified.astype(np.uint8)
+                sketch_pieces.append(Image.fromarray(img_modified[:, :, [2, 1, 0, 3]] * 255))
             last_stroke_time = 0
 
         textbox.setX(800)
