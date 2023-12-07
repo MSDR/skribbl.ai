@@ -125,6 +125,29 @@ def advance_game_phase():
         round_time = 0
         last_guess_time = 0
 
+def choose_start_message():
+    global start_message
+
+    answer_messages = []
+    if round_time >= 59:
+        if game_phase == "ai":
+            answer_messages += ["The answer was "+current_word+"."]
+            
+        elif game_phase == "human":
+            answer_messages += ["The singularity is not upon us.", "numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 1",
+                        "That was... abstract.", "Your artistic finesse has bested my algorithms.", "Ah, the enigma of human expression!",
+                        "Congratulations, your drawing is a Turing test in itself. I'm stumped!"]
+    else:
+        if game_phase == "ai":
+            answer_messages += ["You got it!"]    
+
+        elif game_phase == "human":
+            answer_messages += ["We've achieved AGI!", "As an AI model, that was too easy.", "A win for silicon brains everywhere!",
+                                "My circuits deciphered your masterpiece.", "Your drawing was no match for my neural networks.",
+                                "Cracked it! AI: 1, Picasso: 0."]
+            
+    start_message = random.choice(answer_messages)
+
 def update_timing():
     global round_time
     round_time = int(time.time())-round_start_time
@@ -138,11 +161,11 @@ def process_keyboard_events(events):
             sys.exit()
 
         # save & start new drawing
-        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_LSHIFT):
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_r):
            canvas.reset()
 
         # undo
-        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_u):
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_u or event.key == pygame.K_LSHIFT):
             canvas.undo()
 
         # change color
@@ -188,11 +211,10 @@ def process_ai():
         sketch_pieces.pop(0)
         last_stroke_time = round_time
 
-
+# update hint if necessary
 def update_hint():
     global hint,hint_indices
 
-    # update hint if necessary
     hint_count = max(int(round_time/15)-1, 0) # update at 30s, 45s
     if len(hint_indices) < hint_count:
         hint_indices.append(random.choice([i for i, c in enumerate(current_word) if i not in hint_indices and c != ' ']))
@@ -202,6 +224,8 @@ def update_hint():
 
     elif hint == None:
         hint = "".join([("-" if c != ' ' else ' ') for c in current_word])
+
+########## Drawing Functions ##################################################
 
 # draw canvas at the bottom-center of the screen
 def draw_canvas():
@@ -232,7 +256,6 @@ def draw_canvas():
         13
     )
     screen.blit(brush, brush_coords)
-
 
 # draw current word at top of screen
 def draw_prompt():
@@ -295,7 +318,6 @@ while True:
         draw_start_screen()
 
         for event in events:
-            # handle MOUSEBUTTONUP
             if event.type == pygame.MOUSEBUTTONUP:
                 advance_game_phase()
 
@@ -321,25 +343,8 @@ while True:
         draw_timer()   # draw timer to top-right of screen
 
         if round_time >= 59 or chat_box.correct_guess(current_word):
-            answer_messages = []
-            if round_time >= 59:
-                if game_phase == "ai":
-                    answer_messages += ["The answer was "+current_word+"."]
-                    
-                elif game_phase == "human":
-                    answer_messages += ["The singularity is not upon us.", "numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 1",
-                                "That was... abstract.", "Your artistic finesse has bested my algorithms.", "Ah, the enigma of human expression!",
-                                "Congratulations, your drawing is a Turing test in itself. I'm stumped!"]
-            else:
-                if game_phase == "ai":
-                    answer_messages += ["You got it!"]    
-
-                elif game_phase == "human":
-                    answer_messages += ["We've achieved AGI!", "As an AI model, that was too easy."]
-                    
-            start_message = random.choice(answer_messages)
+            choose_start_message()
             advance_game_phase()
-            
 
     ### advance display ###############################
     pygame_widgets.update(events)
