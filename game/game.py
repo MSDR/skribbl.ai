@@ -38,7 +38,7 @@ canvas_coords = [canvasSize/2, screen_height/2 - canvasSize/2] # [256, 104]
 guess = generative.sketch_to_guess(canvas.get_image())
 
 # fonts
-message_font = pygame.font.SysFont('Comic Sans', 100)
+message_font = pygame.font.SysFont('Comic Sans', 80)
 prompt_font = pygame.font.SysFont('Comic Sans', 40)
 chat_font = pygame.font.SysFont('Comic Sans', 24)
 
@@ -49,19 +49,20 @@ chat_box = ChatBox(chat_font)
 def output_textbox():
     chat_box.chat("Human", textbox.getText())
     textbox.setText("")
-textbox = TextBox(screen, 800, 578, 358, 40, font=chat_font,
+textbox = TextBox(screen, -800, 578, 358, 40, font=chat_font,
                   borderColour=(0, 0, 0),
                   onSubmit=output_textbox, radius=2, borderThickness=4) 
 
 # to track when mouse is released
 currently_drawing = False
 
-game_phase = "ai_start"
+game_phase = "human_start"
 last_stroke_time = 0
 sketch_pieces = []
 
 # word stuff
-current_word = generative.generate_prompt()
+start_message = ""
+current_word = generative.sample_prompts()
 hint = None
 hint_indices = []
 
@@ -73,7 +74,8 @@ last_guess_time = 0
 ########## Game Functions ##################################################
 
 def advance_game_phase():
-    global round_start_time,round_time,last_guess_time,current_word,hint,hint_indices,currently_drawing,sketch_pieces,last_stroke_time,game_phase,textbox,chat_box
+    global round_start_time,round_time,last_guess_time,current_word,hint,hint_indices
+    global currently_drawing,sketch_pieces,last_stroke_time,game_phase,textbox,chat_box
 
     if game_phase == "human": game_phase = "ai_start"
     elif game_phase == "ai":    game_phase = "human_start"
@@ -85,7 +87,10 @@ def advance_game_phase():
         currently_drawing = False
         canvas.reset()
 
-        current_word = generative.generate_prompt()
+        if "ai" in game_phase:
+            current_word = generative.generate_prompt()
+        else:
+            current_word = generative.sample_prompts()
         hint = None
         hint_indices = []
         textbox.setX(-800) # move widget offscreen
@@ -99,7 +104,6 @@ def advance_game_phase():
         if game_phase == "ai":
             sketch = generative.prompt_to_sketch(current_word)
             sketch_pieces = []
-            sketch.save("game/0sketch.png")
             imgs = split_sketch_into_components(sketch)
             for img in imgs:
                 img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGRA)
@@ -109,6 +113,12 @@ def advance_game_phase():
                 img_modified = img_modified.astype(np.uint8)
                 sketch_pieces.append(Image.fromarray(img_modified[:, :, [2, 1, 0, 3]] * 255))
             last_stroke_time = 0
+
+        if game_phase == "human":
+            mx, _ = pygame.mouse.get_pos()
+            if mx <= screen_width/3: current_word = current_word[0]
+            elif mx <= 2*screen_width/3: current_word = current_word[1]
+            else: current_word = current_word[2]
 
         textbox.setX(800)
         round_start_time = int(time.time())
@@ -142,7 +152,10 @@ def process_keyboard_events(events):
 def process_mouse_press():
     global currently_drawing
 
-    if pygame.mouse.get_pressed()[0]:
+    if True in pygame.mouse.get_pressed():
+        if pygame.mouse.get_pressed()[2]: canvas.erasing = True
+        else: canvas.erasing = False
+
         mx, my = pygame.mouse.get_pos()
 
         # draw if mouse pressed within canvas
@@ -159,6 +172,7 @@ def process_mouse_press():
     elif currently_drawing: # mouse just released from canvas
         canvas.do()
         currently_drawing = False
+        canvas.erasing = False
 
 # perform guesses and sketches
 def process_ai():
@@ -169,11 +183,10 @@ def process_ai():
         chat_box.chat("ai", guess)
         last_guess_time = round_time
 
-    if game_phase == "ai" and round_time-last_stroke_time >= 2 and len(sketch_pieces) > 0:
+    if game_phase == "ai" and len(sketch_pieces) > 0 and round_time-last_stroke_time >= min(2, 60/len(sketch_pieces)):
         canvas.draw_image(sketch_pieces[0])
-        last_stroke_time = round_time
-        sketch_pieces[0].save("game/"+str(len(sketch_pieces))+".png")
         sketch_pieces.pop(0)
+        last_stroke_time = round_time
 
 
 def update_hint():
@@ -200,6 +213,26 @@ def draw_canvas():
         4,
         2
     )
+
+    brush_coords = canvas_coords[0]-44, canvas_coords[1]+2
+    pygame.draw.rect(
+        screen,
+        [0,0,0],
+        [brush_coords[0]-4, brush_coords[1]-4, 48, 48],
+        4,
+        2
+    )
+
+    brush = pygame.Surface([40,40])
+    brush.fill([255,255,255])
+    pygame.draw.circle(
+        brush,
+        [255,255,255] if canvas.erasing else canvas.colors[canvas.drawColor],
+        [20, 20],
+        13
+    )
+    screen.blit(brush, brush_coords)
+
 
 # draw current word at top of screen
 def draw_prompt():
@@ -230,6 +263,25 @@ def draw_timer():
     timer_image = pygame.image.load("game/assets/timer"+str(timer_time)+".png")
     screen.blit(timer_image, [1160, 0])
 
+def draw_start_screen():
+    if game_phase == "human_start":
+        message_surface = message_font.render('Your turn! Choose a prompt:', True, [0,0,0])
+        message_rect = message_surface.get_bounding_rect()
+        screen.blit(message_surface, (screen_width/2-message_rect.w/2, screen_height/3))
+
+        for i in range(3):
+            prompt_surface = prompt_font.render('"'+current_word[i]+'"', True, [0,0,0])
+            prompt_rect = prompt_surface.get_bounding_rect()
+            screen.blit(prompt_surface, ((i+1)*screen_width/4-prompt_rect.w/2, 2*screen_height/3-prompt_rect.h/2))
+
+    elif game_phase == "ai_start":
+        message_surface = message_font.render('AI\'s turn. Generating...', True, [0,0,0])
+        message_rect = message_surface.get_bounding_rect()
+        screen.blit(message_surface, (screen_width/2-message_rect.w/2, screen_height/2-message_rect.h/2))
+
+    answer_surface = prompt_font.render(start_message, True, [0,0,0])
+    answer_rect = answer_surface.get_bounding_rect()
+    screen.blit(answer_surface, (screen_width/2-answer_rect.w/2, screen_height/5-answer_rect.h/2))
 
 ########## Game Loop ##########################################################
 
@@ -240,17 +292,15 @@ while True:
     events = pygame.event.get()
 
     if game_phase == "human_start":
-        message_surface = message_font.render('Your turn! Draw: "'+current_word+'"', True, [0,0,0])
-        message_rect = message_surface.get_bounding_rect()
-        screen.blit(message_surface, (screen_width/2-message_rect.w/2, screen_height/2-message_rect.h/2))
+        draw_start_screen()
 
-        if pygame.mouse.get_pressed()[0]:
-            advance_game_phase()
+        for event in events:
+            # handle MOUSEBUTTONUP
+            if event.type == pygame.MOUSEBUTTONUP:
+                advance_game_phase()
 
     elif game_phase == "ai_start":
-        message_surface = message_font.render('AI\'s turn. Generating...', True, [0,0,0])
-        message_rect = message_surface.get_bounding_rect()
-        screen.blit(message_surface, (screen_width/2-message_rect.w/2, screen_height/2-message_rect.h/2))
+        draw_start_screen()
 
         if round_time > 0:
             print("moving to ai")
@@ -271,6 +321,23 @@ while True:
         draw_timer()   # draw timer to top-right of screen
 
         if round_time >= 59 or chat_box.correct_guess(current_word):
+            answer_messages = []
+            if round_time >= 59:
+                if game_phase == "ai":
+                    answer_messages += ["The answer was "+current_word+"."]
+                    
+                elif game_phase == "human":
+                    answer_messages += ["The singularity is not upon us.", "numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 1",
+                                "That was... abstract.", "Your artistic finesse has bested my algorithms.", "Ah, the enigma of human expression!",
+                                "Congratulations, your drawing is a Turing test in itself. I'm stumped!"]
+            else:
+                if game_phase == "ai":
+                    answer_messages += ["You got it!"]    
+
+                elif game_phase == "human":
+                    answer_messages += ["We've achieved AGI!", "As an AI model, that was too easy."]
+                    
+            start_message = random.choice(answer_messages)
             advance_game_phase()
             
 

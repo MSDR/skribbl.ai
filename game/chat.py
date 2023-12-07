@@ -26,7 +26,7 @@ class ChatBox:
 
     def correct_guess(self, prompt):
         for msg in self.chat_history:
-            if prompt.lower() in msg:
+            if prompt in msg.lower() or "nsfw" in msg:
                 return True
         return False
     

@@ -11,14 +11,33 @@ from server.pts import PromptToSketch
 class Generative():
     def __init__(self):
         self.stg = None#SketchToGuess()
+        self.local_url = "http://127.0.0.1:5000"
+        self.server_url = "http://c1cc-128-113-60-117.ngrok-free.app/"
+
+        self.prompts = []
+        with open("game\\assets\\prompts.txt", 'r') as file:
+            for word in file:
+                self.prompts.append(word.strip())
+        
+    # returns a list of three prompt choices
+    def sample_prompts(self):
+        return random.sample(self.prompts, 3)
 
     def generate_prompt(self):
-        return random.choice(["chef", "apple", "tree", "worm", "pizza", "dog", "shark", "bridge", "slug", "parrot", "broccoli"])
+        url = f'{self.server_url}/choose_prompt'
+        prompts = self.sample_prompts()
+        return prompts[0]
+        res = requests.get(url, params={'prompts': prompts})
+
+        if res.status_code == 200:
+            prompt = res.json()['prompt']
+            return prompt
+        else:
+            print("Unknown Error", res.json())
 
     def prompt_to_sketch(self, prompt):
         #return pygame.image.load("game/chef.png")
-        BASE_URL = "http://c1cc-128-113-60-117.ngrok-free.app/"
-        url = f'{BASE_URL}/prompt_to_sketch'
+        url = f'{self.server_url}/prompt_to_sketch'
         res = requests.get(url, params={'prompt': prompt})
 
         if res.status_code == 200:
@@ -34,10 +53,9 @@ class Generative():
         #     return "placeholder"
         # return self.stg.guess(image, hint)
 
-        BASE_URL = "http://127.0.0.1:5000"  # This will change
         sketch = image#Image.open('test_imgs/pizza.png')
 
-        url = f'{BASE_URL}/sketch_to_guess'
+        url = f'{self.local_url}/sketch_to_guess'
         buffer = BytesIO()
         sketch.save(buffer, format='PNG')
         buffer.seek(0)

@@ -10,6 +10,7 @@ class Canvas():
 
         # brush parameters
         self.colors = [[0,0,0], [255,10,30], [30,255,90], [30,50,255], [120,60,30], [240, 240, 0]]
+        self.erasing = False
         self.drawColor = 0
         self.brushSize = 8
         self.brushSizeSteps = 12
@@ -45,7 +46,7 @@ class Canvas():
     def draw_stroke(self, x, y):
         pygame.draw.circle(
             self.canvas,
-            self.colors[self.drawColor],
+            [255,255,255] if self.erasing else self.colors[self.drawColor],
             [x, y],
             self.brushSize,
         )
@@ -54,7 +55,6 @@ class Canvas():
         image_bytes = image.tobytes()
         image_surface = pygame.image.fromstring(image_bytes, [512, 512], image.mode)
         self.canvas.blit(image_surface, [0,0])
-        print("drew image")
 
     def get_image(self):
         pil_string = pygame.image.tostring(self.canvas, "RGB", False)
