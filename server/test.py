@@ -3,8 +3,8 @@
 import base64
 from io import BytesIO
 import requests
-from stg import SketchToGuess
-from pts import PromptToSketch
+# from stg import SketchToGuess
+# from pts import PromptToSketch
 from PIL import Image
 
 # # Sketch To Guess Testing
@@ -17,6 +17,19 @@ from PIL import Image
 # pts = PromptToSketch()
 # img = pts.sketch('a pizza')
 # img.show()
+
+# Prompt To Prompt GET Testing
+BASE_URL = "http://127.0.0.1:5000"  # This will change
+prompts = ['pizza', 'apple', 'house']
+
+url = f'{BASE_URL}/choose_prompt'
+res = requests.get(url, params={'prompts': prompts})
+
+if res.status_code == 200:
+    prompt = res.json()['prompt']
+    print(prompt)
+else:
+    print("Unknown Error", res.json())
 
 # Prompt To Sketch GET Testing
 BASE_URL = "http://127.0.0.1:5000"  # This will change
