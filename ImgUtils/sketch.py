@@ -1,3 +1,4 @@
+from io import BytesIO
 from PIL import Image
 import cv2
 import numpy as np
@@ -15,13 +16,21 @@ def display_images(imgs):
         canvas[mask] = img[mask]
         display(canvas)
 
+def convert_to_png_in_memory(original_image):
+    buffer = BytesIO()
+    original_image.save(buffer, format='PNG')
+    return Image.open(buffer)
+
 def split_sketch_into_components(image: Image):
+    # Make sure its the right format first
+    image = convert_to_png_in_memory(image)
+
     # Convert PIL to OpenCV
     img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGRA)
     img_gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
 
     # Remove background from simple mask 
-    _, thres = cv2.threshold(img_gray, 190, 255, cv2.THRESH_BINARY_INV)
+    _, thres = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY_INV)
     mask = thres == 0
     replacement_value = np.array([255, 255, 255, 0], dtype=np.uint8)
     img_cv[mask] = replacement_value
