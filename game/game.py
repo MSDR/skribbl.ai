@@ -19,7 +19,7 @@ import time
 
 generative = Generative()
 
-########## Pygame Setup #######################################################
+########## Game Setup #########################################################
 
 # increase dots per inch so it looks sharper
 ctypes.windll.shcore.SetProcessDpiAwareness(True)
@@ -71,7 +71,7 @@ round_time = -1
 last_guess_time = 0
 
 
-########## Game Functions ##################################################
+########## Game Functions #####################################################
 
 def advance_game_phase():
     global round_start_time,round_time,last_guess_time,current_word,hint,hint_indices
@@ -125,11 +125,13 @@ def advance_game_phase():
         round_time = 0
         last_guess_time = 0
 
-def choose_start_message():
+def choose_start_message(nsfw=None):
     global start_message
 
     answer_messages = []
-    if round_time >= 59:
+    if nsfw is not None:
+        answer_messages += ["Sorry about that. Let's try again:"]
+    elif round_time >= 59:
         if game_phase == "ai":
             answer_messages += ["The answer was "+current_word+"."]
             
@@ -160,12 +162,12 @@ def process_keyboard_events(events):
             pygame.quit()
             sys.exit()
 
-        # save & start new drawing
-        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_r):
+        # start new drawing
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN):
            canvas.reset()
 
         # undo
-        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_u or event.key == pygame.K_LSHIFT):
+        elif (event.type == pygame.KEYDOWN and event.key == pygame.K_LCTRL):
             canvas.undo()
 
         # change color
@@ -201,8 +203,9 @@ def process_mouse_press():
 def process_ai():
     global last_guess_time, last_stroke_time, sketch_pieces
 
-    if game_phase == "human" and round_time-last_guess_time >= 5:    
-        guess = generative.sketch_to_guess(canvas.get_image(), hint)
+    if game_phase == "human" and round_time-last_guess_time >= 5: 
+        miss = chat_box.get_last_ai_guess()
+        guess = generative.sketch_to_guess(canvas.get_image(), miss)
         chat_box.chat("ai", guess)
         last_guess_time = round_time
 
@@ -279,6 +282,7 @@ def draw_chatbox():
         2
     )
 
+# draw timer to top-right of screen
 def draw_timer():
     # calculate timer interval
     timer_time = round_time - round_time%15 + (7 if round_time%15 >= 7 else 0)
@@ -314,6 +318,7 @@ while True:
     update_timing()
     events = pygame.event.get()
 
+    ### start screen phases ###############################
     if game_phase == "human_start":
         draw_start_screen()
 
@@ -328,15 +333,16 @@ while True:
             print("moving to ai")
             advance_game_phase()
 
+    ### game phase ########################################
     else:
-        ### process input events ##########################
+        ### process input events ###########
         process_keyboard_events(events)
         process_mouse_press()
 
-        ### run generative models #########################
+        ### run generative models ##########
         process_ai()
 
-        ### draw elements to screen #######################
+        ### draw elements to screen ########
         draw_canvas()  # draw canvas at the bottom-center of the screen
         draw_prompt()  # draw prompt or hint above canvas
         draw_chatbox() # draw chat box to the right of canvas
@@ -345,8 +351,13 @@ while True:
         if round_time >= 59 or chat_box.correct_guess(current_word):
             choose_start_message()
             advance_game_phase()
+        
+        if chat_box.correct_guess(current_word) is None and game_phase == "ai":
+            game_phase = "human"
+            choose_start_message(nsfw=True)
+            advance_game_phase()
 
-    ### advance display ###############################
+    ### advance display ###################################
     pygame_widgets.update(events)
     pygame.display.flip()
     fpsClock.tick(fps)

@@ -26,10 +26,19 @@ class ChatBox:
 
     def correct_guess(self, prompt):
         for msg in self.chat_history:
-            if prompt in msg.lower() or "nsfw" in msg:
+            if prompt.lower() in msg.lower():
                 return True
+            if "nsfw" in msg:
+                return None
         return False
     
     def new_round(self):
         self.old_chat_history = self.chat_history
         self.chat_history = []
+
+    def get_last_ai_guess(self):
+        for msg in self.chat_history:
+            if "ai" not in msg:
+                continue
+            return msg[5:]
+        return ""

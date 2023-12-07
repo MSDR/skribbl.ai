@@ -74,6 +74,10 @@ def prompt_to_sketch():
 
 @app.route('/sketch_to_guess', methods=['POST'])
 def sketch_to_guess():
+    miss = request.args.get('miss')
+    if not miss:
+        miss = None
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
     
@@ -89,7 +93,7 @@ def sketch_to_guess():
         except Exception as e:
             return jsonify({"error": f"Error opening the image: {str(e)}"}), 400
         
-        guess = stg.guess(image) if not TEST_MODE else 'pizza'
+        guess = stg.guess(image, miss) if not TEST_MODE else 'pizza'
 
         return jsonify({"guess": guess}), 200
     else:

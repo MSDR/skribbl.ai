@@ -18,10 +18,12 @@ class Generative():
         with open("game\\assets\\prompts.txt", 'r') as file:
             for word in file:
                 self.prompts.append(word.strip())
+
+        self.impressive_prompts = ["pirate", "pizza", "parrot", "smile", "wave", "skyscraper", "dog"]
         
     # returns a list of three prompt choices
     def sample_prompts(self):
-        return random.sample(self.prompts, 3)
+        return random.sample(self.impressive_prompts, 3)
 
     def generate_prompt(self):
         url = f'{self.server_url}/choose_prompt'
@@ -48,7 +50,7 @@ class Generative():
         else:
             print("Unknown Error", res.json())
 
-    def sketch_to_guess(self, image, hint=None):
+    def sketch_to_guess(self, image, miss=None):
         # if self.stg == None:
         #     return "placeholder"
         # return self.stg.guess(image, hint)
@@ -59,7 +61,10 @@ class Generative():
         buffer = BytesIO()
         sketch.save(buffer, format='PNG')
         buffer.seek(0)
-        res = requests.post(url, files={'file': ('anything.png', buffer, 'image/png')})
+        if miss is None:
+            res = requests.post(url, files={'file': ('anything.png', buffer, 'image/png')})
+        else:
+            res = requests.post(url, files={'file': ('anything.png', buffer, 'image/png')}, params={'miss': miss})
 
         if res.status_code == 200:
             data = res.json()

@@ -11,11 +11,13 @@ class SketchToGuess:
         self.model.to(self.device)
     
     # Takes in PIL Image
-    def guess(self, image, hint=None):
-        if hint is None:
-            prompt = "Question: In one word, what is this sketch of? Answer:"
-        else:
-            prompt = "Hint: "+hint+". The hint is the answer, but some letters are replaced with a dash. Question: Using the hint, what is this a sketch of?  Answer:"
+    def guess(self, image, miss=None):
+        # if miss is None:
+        #     prompt = "Question: In one word, what is this sketch of? Answer:"
+        # else:
+        #     prompt = "This sketch is NOT "+miss+". Question: What is this a sketch of? Answer:"
+        #     print(prompt)
+        prompt = "Question: In one word, what is this sketch of? Answer:"
         inputs = self.processor(image, text=prompt, return_tensors="pt").to(self.device, torch.float16)
 
         generated_ids = self.model.generate(**inputs, max_new_tokens=10)
