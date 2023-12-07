@@ -55,7 +55,7 @@ def split_sketch_into_components(image: Image):
 
     # Find contours, filter and sort them
     img_gray = cv2.cvtColor(img_cv, cv2.COLOR_RGB2GRAY)
-    _, img_bw = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY)
+    _, img_bw = cv2.threshold(img_gray, 150, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(img_bw, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = [cnt for cnt in contours if 
                 (cv2.contourArea(cnt) < (img_cv.shape[0] * img_cv.shape[1] * 0.95)) and 

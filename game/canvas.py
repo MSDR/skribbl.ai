@@ -1,4 +1,5 @@
 import pygame
+from PIL import Image
 
 class Canvas():
     def __init__(self):
@@ -50,4 +51,11 @@ class Canvas():
         )
 
     def draw_image(self, image):
-        self.canvas.blit(image, [0,0])
+        image_bytes = image.tobytes()
+        image_surface = pygame.image.fromstring(image_bytes, [512, 512], image.mode)
+        self.canvas.blit(image_surface, [0,0])
+        print("drew image")
+
+    def get_image(self):
+        pil_string = pygame.image.tostring(self.canvas, "RGB", False)
+        return Image.frombytes("RGB", (512,512), pil_string)
